@@ -37,7 +37,14 @@ class RecordCache:
             type_ (Type): type
             class_ (Class): class
         """
-        pass
+        for r in records:
+            r = r.to_dict()
+            if(r['name'] == dname and r['type'] == type_ and r['class'] == class_):
+                if(r['ttl'] > datetime.datetime.now()):
+                    return r.from_dict()
+                else:
+                    records.remove(r.from_dict())
+        return (None)
 
     def add_record(self, record):
         """Add a new Record to the cache
@@ -45,7 +52,12 @@ class RecordCache:
         Args:
             record (ResourceRecord): the record added to the cache
         """
-        pass
+        record = record.to_dict()
+        now = datetime.datetime.now()
+        end = now.addSecs(now, self.ttl)
+        if self.ttl > 0:
+            record['ttl'] = end
+        records.append(record.from_dict())
 
     def read_cache_file(self):
         """Read the cache file from disk"""

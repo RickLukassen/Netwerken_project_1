@@ -42,30 +42,58 @@ class Resolver:
         Returns:
             (str, [str], [str]): (hostname, aliaslist, ipaddrlist)
         """
+        hints = [
+            "198.41.0.4",
+            "192.228.79.201",
+            "192.33.4.12",
+            "199.7.91.13",
+            "192.203.230.10",
+            "192.5.5.241",
+            "192.112.36.4",
+            "128.63.2.53",
+            "192.36.148.17",
+            "192.58.128.30",
+            "193.0.14.129",
+            "199.7.83.42",
+            "202.12.27.33"]
+
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(self.timeout)
+        # check if hostname is in local data
+        # todo
 
+        finished = False
+        query_id = 1
         # Create and send query
-        question = Question(Name(hostname), Type.A, Class.IN)
-        header = Header(9001, 0, 1, 0, 0, 0)
-        header.qr = 0
-        header.opcode = 0
-        header.rd = 1
-        query = Message(header, [question])
-        sock.sendto(query.to_bytes(), ("8.8.8.8", 53))
+        while(not(finished) and hints):
+            question = Question(Name(hostname), Type.A, Class.IN)
+            header = Header(query_id, 0, 1, 0, 0, 0)
+            header.qr = 0
+            header.opcode = 0
+            header.rd = 1
+            query = Message(header, [question])
+            server = hints.pop([0])
+            sock.sendto(query.to_bytes(), (server, 53))
 
-        # Receive response
-        data = sock.recv(512)
-        response = Message.from_bytes(data)
+            # Receive response
+            data = sock.recv(512)
+            response = Message.from_bytes(data)
 
-        # Get data
-        aliaslist = []
-        ipaddrlist = []
-        for answer in response.answers:
-            if answer.type_ == Type.A:
-                ipaddrlist.append(answer.rdata.address)
-            if answer.type_ == Type.CNAME:
-                aliaslist.append(hostname)
-                hostname = str(answer.rdata.cname)
-
+            # Get data and do stuff with it
+            aliaslist = []
+            ipaddrlist = []
+            for answer in response.answers:
+                #result we're looking for
+                if answer.type_ == Type.A and answer.name == hostname:
+                    ipaddrlist.append(answer.rdata.address)
+                    #cache it, todo
+                    finished = True
+                #canonical name
+                if answer.type_ == Type.CNAME:
+                    aliaslist.append(hostname)
+                    hostname = str(answer.rdata.cname)
+                #other cases??
+                #todo
+                    
+            query_id += 1
         return hostname, aliaslist, ipaddrlist
