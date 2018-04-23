@@ -10,6 +10,8 @@ It is highly recommended to use these.
 
 
 import json
+import datetime
+from datetime import timedelta
 
 from dns.resource import ResourceRecord
 
@@ -37,11 +39,13 @@ class RecordCache:
             type_ (Type): type
             class_ (Class): class
         """
-        for r in records:
+        print("Checking cache...", len(self.records))
+        for r in self.records:
             r = r.to_dict()
+            print(r.name, dname)
             if(r['name'] == dname and r['type'] == type_ and r['class'] == class_):
                 if(r['ttl'] > datetime.datetime.now()):
-                    return r.from_dict()
+                    return ResourceRecord.from_dict(r)
                 else:
                     records.remove(r.from_dict())
         return (None)
@@ -52,12 +56,13 @@ class RecordCache:
         Args:
             record (ResourceRecord): the record added to the cache
         """
+        print("Adding to cache...")
         record = record.to_dict()
         now = datetime.datetime.now()
-        end = now.addSecs(now, self.ttl)
+        end = self.addSecs(now, self.ttl)
         if self.ttl > 0:
             record['ttl'] = end
-        records.append(record.from_dict())
+        self.records.append(ResourceRecord.from_dict(record))
 
     def read_cache_file(self):
         """Read the cache file from disk"""
@@ -77,3 +82,6 @@ class RecordCache:
                 json.dump(dcts, file_, indent=2)
         except:
             print("could not write cache")
+
+    def addSecs(self, tm, secs):
+        return tm + timedelta(seconds=secs)
