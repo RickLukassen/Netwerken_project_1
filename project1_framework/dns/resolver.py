@@ -74,9 +74,17 @@ class Resolver:
         ips = []
         aliass = []
         new_servers = {}
+        servers = servers.copy()
         while(servers):
             name, server = servers.popitem()
-            print("Question:   from:", name, " : ", ".".join(fqdn[-iteration:]), "  to : ", server)
+            if(server == None):
+                name2 = name.split(".")
+                if("" in name2):
+                    name2.remove("")
+                (a,b,c) = self.resolveQuestion(name2, self.hints, 1)
+                new_servers[name] = c[0]
+                server = new_servers[name]
+#            print("Question: ", ".".join(fqdn[-iteration:]), " , to : " , name,  server)
             response = self.sendQuestion(".".join(fqdn[-iteration:]), server)
             if(len(response.answers) > 0):
                 for ans in response.answers:
@@ -85,23 +93,23 @@ class Resolver:
                         address = ans.rdata.to_dict()['address']
                         if(address not in ips):
                             ips.append(address)
-                            print("Answer:", address)
                             if(self.caching):
                                 self.cache.add_record(ans)
                     #Answer type == CNAME, canonical name
                     if(ans.type_ == 5):
-                        newname = ans.name
+                        newname = ans.to_dict()['rdata']['cname']
                         aliass.append(str(newname))
-                        fqdn = newname.split(".")
-                        return self.resolveQuestion(newname, self.hints, 1)
+                        fqdn = str(newname).split(".")
+                        if("" in fqdn):
+                            fqdn.remove("")
+                        return self.resolveQuestion(fqdn, self.hints, 1)
             else:
-                new_servers.update(self.getNewServers(response.authorities, response.additionals))
+                new_servers.update(self.getNewServers2(response.authorities, response.additionals))
         if(iteration < len(fqdn)):                
             iteration = iteration + 1
         if(len(new_servers) > 0):
-            return self.resolveQuestion(fqdn, new_servers,iteration)
-        return (".".join(fqdn), [], ips)
-
+            return self.resolveQuestion(fqdn, new_servers, iteration)
+        return (".".join(fqdn), aliass, ips)
 
     '''Couples authorities and additionals.'''
     def getNewServers(self, authorities, additionals):
@@ -112,6 +120,17 @@ class Resolver:
                     if(a.type_ == 1):
                         serverlist.update({str(a.name): a.rdata.to_dict()['address']})
         return serverlist
+
+    def getNewServers2(self, authorities, additionals):
+        serverlist = {}
+        for b in authorities:
+            serverlist.update({str(b.rdata.to_dict()['nsdname']) : None})
+            for a in additionals:
+                if(str(a.name) == str(b.rdata.to_dict()['nsdname'])):
+                    if(a.type_ == 1):
+                        serverlist.update({str(b.rdata.to_dict()['nsdname']) : a.rdata.to_dict()['address']})
+        return serverlist
+                
 
     def sendQuestion(self, hostname, server):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

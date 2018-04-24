@@ -40,7 +40,7 @@ class RecordCache:
             class_ (Class): class
         """
         self.read_cache_file()
-        print("Checking cache...", len(self.records))
+#        print("Checking cache...", len(self.records))
         for r in self.records:
             record = r.to_dict()
             record['name'] = record['name'][:-1]
