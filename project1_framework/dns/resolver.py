@@ -15,6 +15,7 @@ from dns.message import Message, Question, Header
 from dns.name import Name
 from dns.types import Type
 from dns.cache import RecordCache
+from dns.resource import ResourceRecord
 
 
 class Resolver:
@@ -27,11 +28,9 @@ class Resolver:
             caching (bool): caching is enabled if True
             ttl (int): ttl of cache entries (if > 0)
         """
-        self.cache = RecordCache(0)
+        self.cache = RecordCache(100)
         self.timeout = timeout
         self.caching = caching
-        if(caching):
-            self.cache.read_cache_file()
         self.ttl = ttl
         self.hints = {
             "a.root-servers.net":"198.41.0.4",
@@ -61,22 +60,19 @@ class Resolver:
         Returns:
             (str, [str], [str]): (hostname, aliaslist, ipaddrlist)
         """
-
         fqdn = hostname.split(".")
         if "" in fqdn:
             fqdn.remove("")
-        if(self.    caching):
-            self.cache.write_cache_file()
+        record_dict = self.cache.lookup(hostname, Type.A, Class.IN)
+        if (record_dict != None):
+            resource_record = ResourceRecord.from_dict(record_dict)
+            return (hostname, [], [resource_record.rdata.address])
+
         return self.resolveQuestion(fqdn, self.hints, 1)
 
     def resolveQuestion(self, fqdn, servers, iteration):
-        cac = self.cache.lookup(".".join(fqdn[-iteration:]), Type.A, Class.IN)
-        if(cac != None):
-            print("Retrieving data from cache...")
-            ips.append(cac.rdata)
         ips = []
         aliass = []
-        finished = False
         new_servers = {}
         while(servers):
             name, server = servers.popitem()
@@ -92,19 +88,18 @@ class Resolver:
                             print("Answer:", address)
                             if(self.caching):
                                 self.cache.add_record(ans)
-                            finished = True
                     #Answer type == CNAME, canonical name
                     if(ans.type_ == 5):
                         newname = ans.name
                         aliass.append(str(newname))
                         fqdn = newname.split(".")
-                        return resolveQuestion(newname, self.hints, 1)
+                        return self.resolveQuestion(newname, self.hints, 1)
             else:
                 new_servers.update(self.getNewServers(response.authorities, response.additionals))
         if(iteration < len(fqdn)):                
             iteration = iteration + 1
         if(len(new_servers) > 0):
-            return self.resolveQuestion(fqdn, new_servers,iteration)             
+            return self.resolveQuestion(fqdn, new_servers,iteration)
         return (".".join(fqdn), [], ips)
 
 

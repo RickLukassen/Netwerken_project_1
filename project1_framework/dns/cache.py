@@ -39,15 +39,13 @@ class RecordCache:
             type_ (Type): type
             class_ (Class): class
         """
+        self.read_cache_file()
         print("Checking cache...", len(self.records))
         for r in self.records:
-            r = r.to_dict()
-            print(r.name, dname)
-            if(r['name'] == dname and r['type'] == type_ and r['class'] == class_):
-                if(r['ttl'] > datetime.datetime.now()):
-                    return ResourceRecord.from_dict(r)
-                else:
-                    records.remove(r.from_dict())
+            record = r.to_dict()
+            record['name'] = record['name'][:-1]
+            if(record['name'] == dname and record['type'] == str(type_) and record['class'] == str(class_)):
+                return record
         return (None)
 
     def add_record(self, record):
@@ -57,12 +55,12 @@ class RecordCache:
             record (ResourceRecord): the record added to the cache
         """
         print("Adding to cache...")
-        record = record.to_dict()
+        record_dict = record.to_dict()
         now = datetime.datetime.now()
         end = self.addSecs(now, self.ttl)
-        if self.ttl > 0:
-            record['ttl'] = end
-        self.records.append(ResourceRecord.from_dict(record))
+
+        self.records.append(ResourceRecord.from_dict(record_dict))
+        self.write_cache_file()
 
     def read_cache_file(self):
         """Read the cache file from disk"""
