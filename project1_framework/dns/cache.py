@@ -14,6 +14,7 @@ import datetime
 from datetime import timedelta
 
 from dns.resource import ResourceRecord
+from dns.resource import CacheData
 
 
 class RecordCache:
@@ -26,7 +27,10 @@ class RecordCache:
             ttl (int): TTL of cached entries (if > 0)
         """
         self.records = []
-        self.ttl = ttl
+        if(ttl > 0):
+            self.ttl = ttl
+        else:
+            self.ttl = 0
 
     def lookup(self, dname, type_, class_):
         """Lookup resource records in cache
@@ -40,13 +44,16 @@ class RecordCache:
             class_ (Class): class
         """
         self.read_cache_file()
-#        print("Checking cache...", len(self.records))
+        entries = []
         for r in self.records:
-            record = r.to_dict()
-            record['name'] = record['name'][:-1]
-            if(record['name'] == dname and record['type'] == str(type_) and record['class'] == str(class_)):
-                return record
-        return (None)
+            if(r['expire'] < datetime.datetime.now().timestamp()):
+                self.records.remove(r)
+                continue
+            #for some reason this does not work.
+            if(r['name'][:-1] == dname and r['type'] == type_ and r['class'] == class_):
+                entries.append(r.to_rr())
+        self.write_cache_file()
+        return (entries)
 
     def add_record(self, record):
         """Add a new Record to the cache
@@ -54,12 +61,10 @@ class RecordCache:
         Args:
             record (ResourceRecord): the record added to the cache
         """
-        print("Adding to cache...")
-        record_dict = record.to_dict()
+        self.read_cache_file()
         now = datetime.datetime.now()
-        end = self.addSecs(now, self.ttl)
-
-        self.records.append(ResourceRecord.from_dict(record_dict))
+        end = self.addSecs(now, self.ttl).timestamp()
+        self.records.append(CacheData(record, end).to_dict())
         self.write_cache_file()
 
     def read_cache_file(self):
@@ -70,11 +75,11 @@ class RecordCache:
                 dcts = json.load(file_)
         except:
             print("could not read cache")
-        self.records = [ResourceRecord.from_dict(dct) for dct in dcts]
+        self.records = [dct for dct in dcts]
 
     def write_cache_file(self):
         """Write the cache file to disk"""
-        dcts = [record.to_dict() for record in self.records]
+        dcts = [cd for cd in self.records]
         try:
             with open("cache", "w") as file_:
                 json.dump(dcts, file_, indent=2)

@@ -1,0 +1,202 @@
+[
+  {
+    "type": "A",
+    "expire": 1534825507.265956,
+    "class": "IN",
+    "name": "jerry.ns.cloudflare.com.",
+    "ttl": 86400,
+    "rdata": {
+      "address": "173.245.59.182"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534825507.274657,
+    "class": "IN",
+    "name": "thalia.nu.",
+    "ttl": 300,
+    "rdata": {
+      "address": "131.174.41.19"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534825509.875653,
+    "class": "IN",
+    "name": "jerry.ns.cloudflare.com.",
+    "ttl": 86400,
+    "rdata": {
+      "address": "173.245.59.182"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534825509.884271,
+    "class": "IN",
+    "name": "thalia.nu.",
+    "ttl": 300,
+    "rdata": {
+      "address": "131.174.41.19"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534825574.407776,
+    "class": "IN",
+    "name": "tani.ns.cloudflare.com.",
+    "ttl": 86400,
+    "rdata": {
+      "address": "173.245.58.224"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534825574.41742,
+    "class": "IN",
+    "name": "thalia.nu.",
+    "ttl": 300,
+    "rdata": {
+      "address": "131.174.41.19"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534825609.197863,
+    "class": "IN",
+    "name": "h.gtld-servers.net.",
+    "ttl": 86400,
+    "rdata": {
+      "address": "192.54.112.30"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534825609.509992,
+    "class": "IN",
+    "name": "l.gtld-servers.net.",
+    "ttl": 86400,
+    "rdata": {
+      "address": "192.41.162.30"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534825610.919283,
+    "class": "IN",
+    "name": "tani.ns.cloudflare.com.",
+    "ttl": 86400,
+    "rdata": {
+      "address": "173.245.58.224"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534825610.928752,
+    "class": "IN",
+    "name": "thalia.nu.",
+    "ttl": 300,
+    "rdata": {
+      "address": "131.174.41.19"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534828452.770253,
+    "class": "IN",
+    "name": "tani.ns.cloudflare.com.",
+    "ttl": 86400,
+    "rdata": {
+      "address": "173.245.58.224"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534828452.780069,
+    "class": "IN",
+    "name": "thalia.nu.",
+    "ttl": 300,
+    "rdata": {
+      "address": "131.174.41.19"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534828463.600135,
+    "class": "IN",
+    "name": "tani.ns.cloudflare.com.",
+    "ttl": 86400,
+    "rdata": {
+      "address": "173.245.58.224"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534828463.610682,
+    "class": "IN",
+    "name": "virtueleivo.thalia.nu.",
+    "ttl": 300,
+    "rdata": {
+      "address": "131.174.41.19"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534828486.524855,
+    "class": "IN",
+    "name": "h.gtld-servers.net.",
+    "ttl": 86400,
+    "rdata": {
+      "address": "192.54.112.30"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534828486.956349,
+    "class": "IN",
+    "name": "j.gtld-servers.net.",
+    "ttl": 86400,
+    "rdata": {
+      "address": "192.48.79.30"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534828489.130036,
+    "class": "IN",
+    "name": "jerry.ns.cloudflare.com.",
+    "ttl": 86400,
+    "rdata": {
+      "address": "173.245.59.182"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534828489.141074,
+    "class": "IN",
+    "name": "virtueleivo.thalia.nu.",
+    "ttl": 300,
+    "rdata": {
+      "address": "131.174.41.19"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534828528.436974,
+    "class": "IN",
+    "name": "jerry.ns.cloudflare.com.",
+    "ttl": 86400,
+    "rdata": {
+      "address": "173.245.59.182"
+    }
+  },
+  {
+    "type": "A",
+    "expire": 1534828528.447968,
+    "class": "IN",
+    "name": "virtueleivo.thalia.nu.",
+    "ttl": 300,
+    "rdata": {
+      "address": "131.174.41.19"
+    }
+  }
+]

@@ -352,3 +352,20 @@ class GenericRecordData(RecordData):
     def from_dict(cls, dct):
         """Create a RecordData object from dict."""
         return cls(dct["data"])
+
+class CacheData(object):
+    def __init__(self, rr, e):
+        self.rr = rr
+        self.expiredate = e
+
+    def to_dict(self):
+        return {"name" : str(self.rr.name),
+                "type" : str(self.rr.type_),
+                "class" : str(self.rr.class_),
+                "ttl" : self.rr.ttl,
+                "rdata" : self.rr.rdata.to_dict(),
+                "expire" : self.expiredate}
+    def to_rr(self):
+        return ResourceRecord(self.rr.name, self.rr.type_, self.rr.class_, self.rr.ttl, self.rr.rdata)
+        
+    

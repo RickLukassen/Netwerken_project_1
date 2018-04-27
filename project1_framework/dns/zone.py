@@ -9,6 +9,9 @@ zones or record sets.
 These classes are merely a suggestion, feel free to use something else.
 """
 
+from dns.resource import ResourceRecord
+from dns.resource import ARecordData
+from dns.resource import CNAMERecordData
 
 class Catalog:
     """A catalog of zones"""
@@ -51,4 +54,34 @@ class Zone:
         Args:
             filename (str): the filename of the master file
         """
-        pass
+        temp = {}
+        """Read the cache file from disk"""
+        with open("roothints.md") as file_:
+            lines = file_.readlines()
+        for l in lines:
+            contents = l.split(" ")
+            if(contents[0] == ";"):
+                continue
+            #First item is fqdn, second is a rr
+            if("." in contents[0]):
+                name = contents[0]
+                class_ = 1
+                if(isinstance(contents[1], int)):
+                    ttl = contents[1]
+                    type_ = contents[2]
+                elif(isinstance(contents[1], str)):
+                    ttl = contents[2]
+                    type_ = contents[1]
+                    rdata = contents[3]
+                if(type_ == 1):
+                    rdata = ARecordData(contents[3])
+                if(type_ == 5):
+                    rdata = CNAMERecordData(contents[3])
+                rr = ResourceRecord(name, type_, class_, ttl, rdata)
+                temp.update({name:rr})
+        self.records = temp.copy()
+
+
+
+
+

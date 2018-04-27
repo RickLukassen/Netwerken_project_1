@@ -28,7 +28,7 @@ class Resolver:
             caching (bool): caching is enabled if True
             ttl (int): ttl of cache entries (if > 0)
         """
-        self.cache = RecordCache(10000000)
+        self.cache = RecordCache(100)
         self.timeout = timeout
         self.caching = caching
         self.ttl = ttl
@@ -60,70 +60,71 @@ class Resolver:
         Returns:
             (str, [str], [str]): (hostname, aliaslist, ipaddrlist)
         """
-        #start with empty lists
-        aliaslist = []
-        ipaddrlist = []
-        #initiate with the list of hints to use.
-        servers = self.hints.copy()
-        #so hostname is not lost when we resolve a CNAME at some point.
-        domain = hostname
-        finished = False
-        #check cache of hostname is in the cache.
-        cache_entries = self.cache.lookup(hostname, Type.A, Class.IN) + self.cache.lookup(hostname, Type.CNAME, Class.IN)
-        if(len(cache_entries) > 0):
-            #TODO            
-            pass
-        while(servers and not finished):
-            #take a server from the list of servers to ask for the domain we're looking for.
+        fqdn = hostname.split(".")
+        if "" in fqdn:
+            fqdn.remove("")
+        record_dict = self.cache.lookup(hostname, Type.A, Class.IN)
+        if (record_dict != None):
+            resource_record = ResourceRecord.from_dict(record_dict)
+            return (hostname, [], [resource_record.rdata.address])
+
+        return self.resolveQuestion(fqdn, self.hints, 1)
+
+    def resolveQuestion(self, fqdn, servers, iteration):
+        ips = []
+        aliass = []
+        new_servers = {}
+        servers = servers.copy()
+        while(servers):
             name, server = servers.popitem()
-            #if the server doesn't have an address, resolve this address first.
             if(server == None):
-                a,b,c = self.gethostbyname(name)
-                if(len(c)>0):
-                    servers[name] = c[0]
-                    server = c[0]
+                name2 = name.split(".")
+                if("" in name2):
+                    name2.remove("")
+                (a,b,c) = self.resolveQuestion(name2, self.hints, 1)
+                if(len(c) > 0):
+                    new_servers[name] = c[0]
+                    server = new_servers[name]
                 else:
                     continue
-            #check whether the name is in the cache.            
-            cache_entries = self.cache.lookup(name, Type.A, Class.IN) + self.cache.lookup(name, Type.CNAME, Class.IN)
-            if(len(cache_entries) > 0):
-                for ce in cache_entries:
-                    if ce.type_ == 1:
+#            print("Question: ", ".".join(fqdn[-iteration:]), " , to : " , name,  server)
+            response = self.sendQuestion(".".join(fqdn[-iteration:]), server)
+            if(len(response.answers) > 0):
+                for ans in response.answers:
+                    #Answer type == A, host server
+                    if(ans.type_ == 1):
                         address = ans.rdata.to_dict()['address']
-                        if(address not in ipaddrlist):
-                            ipaddrlist.append(address)
-                    if ce.type_ == 5:
-                        domain = ans.to_dict()['rdata']['cname']
-                        if domain not in aliaslist:
-                            aliaslist.append(str(domain))
-            #send question to the server to see if it knows where we can find domain
-            try:
-                response = self.sendQuestion(domain, server)
-            except:
-                continue
-            #if the location is in the answers we're done.
-            for ans in response.answers:
-                if ans.type_ == 1:
-                    address = ans.rdata.to_dict()['address']
-                    if(address not in ipaddrlist):
-                        ipaddrlist.append(address)
-                        if(self.caching):
-                            self.cache.add_record(ans)
-                if ans.type_ == 5:
-                    domain = ans.to_dict()['rdata']['cname']
-                    if domain not in aliaslist:
-                        aliaslist.append(str(domain))
-            #add new servers we can ask for the location to our list of servers.
-            new_servers = self.getNewServers(response.authorities, response.additionals)
-            #if we found a (list of) IP-address(es) we're done.
-            if(len(ipaddrlist) > 0):
-                finished = True
-            #combine old list of servers with new one.
-            servers = {**servers, **new_servers}
-        return hostname, aliaslist, ipaddrlist
+                        if(address not in ips):
+                            ips.append(address)
+                            if(self.caching):
+                                self.cache.add_record(ans)
+                    #Answer type == CNAME, canonical name
+                    if(ans.type_ == 5):
+                        newname = ans.to_dict()['rdata']['cname']
+                        aliass.append(str(newname))
+                        fqdn = str(newname).split(".")
+                        if("" in fqdn):
+                            fqdn.remove("")
+                        return self.resolveQuestion(fqdn, self.hints, 1)
+            else:
+                new_servers.update(self.getNewServers2(response.authorities, response.additionals))
+        if(iteration < len(fqdn)):                
+            iteration = iteration + 1
+        if(len(new_servers) > 0):
+            return self.resolveQuestion(fqdn, new_servers, iteration)
+        return (".".join(fqdn), aliass, ips)
 
-    '''Used to combine the suggested servers to check. '''
+    '''Couples authorities and additionals.'''
     def getNewServers(self, authorities, additionals):
+        serverlist = {}
+        for a in additionals:
+            for b in authorities:
+                if(str(a.name) == str(b.rdata.to_dict()['nsdname'])):
+                    if(a.type_ == 1):
+                        serverlist.update({str(a.name): a.rdata.to_dict()['address']})
+        return serverlist
+
+    def getNewServers2(self, authorities, additionals):
         serverlist = {}
         for b in authorities:
             if(b.type_ == 6):
@@ -135,7 +136,7 @@ class Resolver:
                         serverlist.update({str(b.rdata.to_dict()['nsdname']) : a.rdata.to_dict()['address']})
         return serverlist
                 
-    '''Used to handle the sending and receiving of requests/responses.'''
+
     def sendQuestion(self, hostname, server):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(self.timeout)
