@@ -7,7 +7,12 @@ import sys
 import unittest
 from unittest import TestCase
 from argparse import ArgumentParser
-
+from dns.resolver import Resolver
+from dns.cache import RecordCache
+from dns.types import Type
+from dns.classes import Class
+from dns.resource import ResourceRecord
+from dns.resource import ARecordData
 
 PORT = 5001
 SERVER = "localhost"
@@ -15,11 +20,20 @@ SERVER = "localhost"
 
 class TestResolver(TestCase):
     """Resolver tests"""
+    def testResolver(self):
+        res = Resolver(0, False, 0)
+        self.assertEqual(res.gethostbyname("google.com")[0], "google.com")
+        self.assertEqual(res.gethostbyname("symposium.thalia.nu")[2],res.gethostbyname("reis.thalia.nu")[2])
 
 
 class TestCache(TestCase):
     """Cache tests"""
-
+    def testCache(self):
+        cac = RecordCache(0)
+        self.assertEqual(cac.lookup("abcdefghqqqq.com", Type.A, Class.IN), [])
+        test = ResourceRecord("blabla.com", Type.A, Class.IN, 0, ARecordData("111.111.111.111"))
+        cac.add_record(test)
+        self.assertEqual(cac.lookup("blabla.com", Type.A, Class.IN), test)
 
 class TestResolverCache(TestCase):
     """Resolver tests with cache enabled"""

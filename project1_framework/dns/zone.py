@@ -9,9 +9,13 @@ zones or record sets.
 These classes are merely a suggestion, feel free to use something else.
 """
 
+import re
 from dns.resource import ResourceRecord
 from dns.resource import ARecordData
+from dns.resource import NSRecordData
 from dns.resource import CNAMERecordData
+from dns.types import Type
+from dns.classes import Class
 
 class Catalog:
     """A catalog of zones"""
@@ -54,32 +58,34 @@ class Zone:
         Args:
             filename (str): the filename of the master file
         """
-        temp = {}
+        temp = []
         """Read the cache file from disk"""
         with open("roothints.md") as file_:
             lines = file_.readlines()
         for l in lines:
-            contents = l.split(" ")
-            if(contents[0] == ";"):
-                continue
-            #First item is fqdn, second is a rr
-            if("." in contents[0]):
-                name = contents[0]
-                class_ = 1
-                if(isinstance(contents[1], int)):
-                    ttl = contents[1]
-                    type_ = contents[2]
-                elif(isinstance(contents[1], str)):
-                    ttl = contents[2]
-                    type_ = contents[1]
-                    rdata = contents[3]
-                if(type_ == 1):
-                    rdata = ARecordData(contents[3])
-                if(type_ == 5):
-                    rdata = CNAMERecordData(contents[3])
-                rr = ResourceRecord(name, type_, class_, ttl, rdata)
-                temp.update({name:rr})
-        self.records = temp.copy()
+            #remove comments
+            b = re.sub(r';[^\n]*', "", l)
+            te = l.split()
+            if(te[0] != ';'):
+                temp.append(te)
+            if("." in te[0]):
+                type_ = self.getType(te[2])
+                if(type_ == Type.A):
+                    rdata = ARecordData(te[3])
+                elif(type_ == Type.NS):
+                    rdata = NSRecordData(te[3])
+                elif(type_ == Type.CNAME):
+                    rdata = CNAMERecordData(te[3])
+                rr = ResourceRecord(te[0], type_, Class.IN, te[1], rdata)
+                self.records.update({te[0] : rr})
+
+    def getType(self,t):
+        if(t == 'A'):
+            return Type.A
+        if(t == 'NS'):
+            return Type.NS
+        if(t == 'CNAME'):
+            return Type.CNAME
 
 
 
